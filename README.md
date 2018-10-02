@@ -9,10 +9,10 @@ Vital has a real-time prediction microservice called `predictor`. Predictor load
 Predictor receives JSON requests that look like:
 ```
 {
-	"models": [{"id": "b31ea9e8-1ec9-48ec-806d-7e5a5cc94fad", "version": 1}],
+    "models": [{"id": "b31ea9e8-1ec9-48ec-806d-7e5a5cc94fad", "version": 1}],
     "payload": {
-    	"Age in Days": 13505,
-    	"Reason for Visit": "Headache and cough.",
+      "Age in Days": 13505,
+      "Reason for Visit": "Headache and cough.",
       "BUN/Creatnine": 12.34,
       "BP Systolic": 120
     }
@@ -137,10 +137,32 @@ Model configuration in DL4J looks nearly the same as in any other system (Torch,
 ```
 
 *CSV Input*
+
 Notice that the column names for inputs match the varible names provided by our API.
 ```
-Age in Days,	Sex,	Residence,	Emergency Severity,	Chief Complaint
-10220,	Male,	Private residence,	3,	Symptoms of fluid abnormalities. Discoloration or pigmentation. Symptoms referable to mouth. Symptoms referable to throat. Other symptoms referable to eye, NEC
-17520,	Male,		Private residence,	4,	Shoulder symptoms. Back symptoms. Accident, NOS
+Age in Days,	Sex,	Residence,		Emergency Severity,	Chief Complaint
+10220,		Male,	Private residence,	3,			Symptoms of fluid abnormalities. Discoloration or pigmentation. Symptoms referable to mouth. Symptoms referable to throat. Other symptoms referable to eye, NEC
+17520,		Male,	Private residence,	4,			Shoulder symptoms. Back symptoms. Accident, NOS
 ```
 
+## Model Training & Natural Language Processing
+
+Given CSV input data and a model configuration, we would then train the file, save it securely in on Amazon S3, and then load/use the model at prediction time.
+
+Vital supports Word2Vec, ParagraphVectors (also called Doc2Vec), and traditional feature-based NLP (words, lemmas, word-pairs, dependency parsing, etc.). If we are training the network, any text column with more than 20 distinct values will auto-matically be processed as free-text and NLP applied.
+
+## Recurrent Neural Networks
+At present, we don't have recurrent neural network models, but DL4J supports them. In this case, we will send data as follows:
+```
+"static": {
+  "Age in Days": 13505
+},
+"timeSeries": {
+  "BP Systolic": [
+    { "value": 120, "timestamp": 1234},
+    { "value": 117, "timestamp", 0123},
+    ...
+  ]
+}
+```
+Essentially for any value that changes, we will provide all of the values since visit start for that variable, and the timestamp when the change occurred. In this case, no memory would need to be retained by the model itself (and retained on a per-patient basis), but it would instead do the calculation starting over from time zero each time.
